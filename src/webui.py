@@ -260,14 +260,15 @@ if __name__ == '__main__':
 
                 gr.Markdown('## Примеры ввода')
                 gr.Examples(
-                    [
-                        ['https://huggingface.co/phant0m4r/LiSA/resolve/main/LiSA.zip', 'Lisa'],
-                        ['https://pixeldrain.com/u/3tJmABXA', 'Gura'],
-                        ['https://huggingface.co/Kit-Lemonfoot/kitlemonfoot_rvc_models/resolve/main/AZKi%20-%20Sweet%20Magic.zip', 'AZKi'],
-                        ['https://pixeldrain.com/u/4v25nMrv', 'Klein']
-                    ],
-                    label='Примеры',
-                    value='Примеры ввода'
+    [
+        ['https://huggingface.co/phant0m4r/LiSA/resolve/main/LiSA.zip', 'Lisa'],
+        ['https://pixeldrain.com/u/3tJmABXA', 'Gura'],
+        ['https://huggingface.co/Kit-Lemonfoot/kitlemonfoot_rvc_models/resolve/main/AZKi%20(Hybrid).zip', 'Azki']
+    ],
+    [model_zip_link, model_name],
+    [],
+    download_online_model,
+
                 )
 
             with gr.Tab('С локального устройства'):
