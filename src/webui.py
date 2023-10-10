@@ -153,7 +153,6 @@ def show_hop_slider(pitch_detection_algo):
     else:
         return gr.update(visible=False)
 
-
 if __name__ == '__main__':
     parser = ArgumentParser(description='Generate a AI cover song in the song_output/id directory.', add_help=True)
     parser.add_argument("--share", action="store_true", dest="share_enabled", default=False, help="Enable sharing")
@@ -161,6 +160,9 @@ if __name__ == '__main__':
     parser.add_argument('--listen-host', type=str, help='The hostname that the server will use.')
     parser.add_argument('--listen-port', type=int, help='The listening port that the server will use.')
     args = parser.parse_args()
+
+    # Добавим параметр use_gpu=False, чтобы отключить использование GPU
+    web_app = gr.Interface(fn=song_cover_pipeline, inputs="audio", outputs="audio", use_gpu=False)
 
     voice_models = get_current_models(rvc_models_dir)
     with open(os.path.join(rvc_models_dir, 'public_models.json'), encoding='utf8') as infile:
