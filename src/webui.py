@@ -54,14 +54,14 @@ def extract_zip(extraction_folder, zip_name):
                 model_filepath = os.path.join(root, name)
 
     if not model_filepath:
-        raise gr.Error(f'В архиве не найден файл .pth модели. Пожалуйста, проверьте {extraction_folder}.')
+        raise gr.Error(f'No .pth model file was found in the extracted zip. Please check {extraction_folder}.')
 
-    # Перемещаем модель и файл индекса в папку извлечения
+    # move model and index file to extraction folder
     os.rename(model_filepath, os.path.join(extraction_folder, os.path.basename(model_filepath)))
     if index_filepath:
         os.rename(index_filepath, os.path.join(extraction_folder, os.path.basename(index_filepath)))
 
-    # Удаляем ненужные вложенные папки
+    # remove any unnecessary nested folders
     for filepath in os.listdir(extraction_folder):
         if os.path.isdir(os.path.join(extraction_folder, filepath)):
             shutil.rmtree(os.path.join(extraction_folder, filepath))
@@ -69,20 +69,20 @@ def extract_zip(extraction_folder, zip_name):
 
 def download_online_model(url, dir_name, progress=gr.Progress()):
     try:
-        progress(0, desc=f'[~] Загрузка голосовой модели с именем {dir_name}...')
+        progress(0, desc=f'[~] Downloading voice model with name {dir_name}...')
         zip_name = url.split('/')[-1]
         extraction_folder = os.path.join(rvc_models_dir, dir_name)
         if os.path.exists(extraction_folder):
-            raise gr.Error(f'Директория голосовой модели {dir_name} уже существует! Выберите другое имя для вашей голосовой модели.')
+            raise gr.Error(f'Voice model directory {dir_name} already exists! Choose a different name for your voice model.')
 
         if 'pixeldrain.com' in url:
             url = f'https://pixeldrain.com/api/file/{zip_name}'
 
         urllib.request.urlretrieve(url, zip_name)
 
-        progress(0.5, desc='[~] Извлечение архива...')
+        progress(0.5, desc='[~] Extracting zip...')
         extract_zip(extraction_folder, zip_name)
-        return f'[+] Голосовая модель {dir_name} успешно загружена!'
+        return f'[+] {dir_name} Model successfully downloaded!'
 
     except Exception as e:
         raise gr.Error(str(e))
@@ -92,12 +92,12 @@ def upload_local_model(zip_path, dir_name, progress=gr.Progress()):
     try:
         extraction_folder = os.path.join(rvc_models_dir, dir_name)
         if os.path.exists(extraction_folder):
-            raise gr.Error(f'Директория голосовой модели {dir_name} уже существует! Выберите другое имя для вашей голосовой модели.')
+            raise gr.Error(f'Voice model directory {dir_name} already exists! Choose a different name for your voice model.')
 
         zip_name = zip_path.name
-        progress(0.5, desc='[~] Извлечение архива...')
+        progress(0.5, desc='[~] Extracting zip...')
         extract_zip(extraction_folder, zip_name)
-        return f'[+] Голосовая модель {dir_name} успешно загружена!'
+        return f'[+] {dir_name} Model successfully uploaded!'
 
     except Exception as e:
         raise gr.Error(str(e))
@@ -106,12 +106,12 @@ def upload_local_model(zip_path, dir_name, progress=gr.Progress()):
 def filter_models(tags, query):
     models_table = []
 
-    # Без фильтрации
+    # no filter
     if len(tags) == 0 and len(query) == 0:
         for model in public_models['voice_models']:
             models_table.append([model['name'], model['description'], model['credit'], model['url'], model['tags']])
 
-    # Фильтрация по тегам и запросу
+    # filter based on tags and query
     elif len(tags) > 0 and len(query) > 0:
         for model in public_models['voice_models']:
             if all(tag in model['tags'] for tag in tags):
@@ -119,13 +119,13 @@ def filter_models(tags, query):
                 if query.lower() in model_attributes:
                     models_table.append([model['name'], model['description'], model['credit'], model['url'], model['tags']])
 
-    # Фильтрация только по тегам
+    # filter based on only tags
     elif len(tags) > 0:
         for model in public_models['voice_models']:
             if all(tag in model['tags'] for tag in tags):
                 models_table.append([model['name'], model['description'], model['credit'], model['url'], model['tags']])
 
-    # Фильтрация только по запросу
+    # filter based on only query
     else:
         for model in public_models['voice_models']:
             model_attributes = f"{model['name']} {model['description']} {model['credit']} {' '.join(model['tags'])}".lower()
@@ -153,82 +153,80 @@ def show_hop_slider(pitch_detection_algo):
     else:
         return gr.update(visible=False)
 
-if __name__ == '__main__':
-    parser = ArgumentParser(description='Генерация AI-покрытия песни в директории song_output/id.', add_help=True)
-    parser.add_argument("--share", action="store_true", dest="share_enabled", default=False, help="Включить функцию обмена")
-    parser.add_argument("--listen", action="store_true", default=False, help="Делать веб-интерфейс доступным из вашей локальной сети.")
-    parser.add_argument('--listen-host', type=str, help='Имя хоста, которое будет использоваться сервером.')
-    parser.add_argument('--listen-port', type=int, help='Порт прослушивания, который будет использоваться сервером.')
-    args = parser.parse_args()
 
-    # Добавим параметр use_gpu=False, чтобы отключить использование GPU
-    web_app = gr.Interface(fn=song_cover_pipeline, inputs="audio", outputs="audio", use_gpu=False)
+if __name__ == '__main__':
+    parser = ArgumentParser(description='Generate a AI cover song in the song_output/id directory.', add_help=True)
+    parser.add_argument("--share", action="store_true", dest="share_enabled", default=False, help="Enable sharing")
+    parser.add_argument("--listen", action="store_true", default=False, help="Make the WebUI reachable from your local network.")
+    parser.add_argument('--listen-host', type=str, help='The hostname that the server will use.')
+    parser.add_argument('--listen-port', type=int, help='The listening port that the server will use.')
+    args = parser.parse_args()
 
     voice_models = get_current_models(rvc_models_dir)
     with open(os.path.join(rvc_models_dir, 'public_models.json'), encoding='utf8') as infile:
         public_models = json.load(infile)
 
-    with gr.Blocks(title='AICoverGenWebUI', theme='light') as app:
+   with gr.Blocks(title='AICoverGenWebUI', theme='light') as app:
 
         gr.Label('AISINGERS 🐳 | https://t.me/aisingers', show_label=False)
 
-        # Главная вкладка
-        with gr.Tab("Генерировать"):
+        # main tab
+        with gr.Tab("Основная"):
 
-            with gr.Accordion('Основные параметры'):
+            with gr.Accordion('Основные опции'):
                 with gr.Row():
                     with gr.Column():
-                        rvc_model = gr.Dropdown(voice_models, label='Голосовые модели', info='Папка моделей "AICoverGen --> rvc_models". После добавления новых моделей в эту папку, нажмите кнопку обновления')
+                        rvc_model = gr.Dropdown(voice_models, label='Голосовые модели', info='Папка моделей «AICoverGen --> rvc_models». После добавления новых моделей в эту папку нажмите кнопку «Обновить».')
                         ref_btn = gr.Button('Обновить модели 🔁', variant='primary')
 
                     with gr.Column() as yt_link_col:
-                        song_input = gr.Text(label='Входной трек', info='Ссылка на песню на YouTube или полный путь к локальному файлу. Для загрузки файла нажмите кнопку ниже.')
-                        show_file_upload_button = gr.Button('Загрузить файл')
+                        song_input = gr.Text(label='Song input', info='Link to a song on YouTube or full path to a local file. For file upload, click the button below.')
+                        show_file_upload_button = gr.Button('Upload file instead')
 
                     with gr.Column(visible=False) as file_upload_col:
-                        local_file = gr.File(label='Аудио файл')
-                        song_input_file = gr.UploadButton('Загрузить 📂', file_types=['audio'], variant='primary')
-                        show_yt_link_button = gr.Button('Вставить ссылку YouTube/Путь к локальному файлу')
+                        local_file = gr.File(label='Audio file')
+                        song_input_file = gr.UploadButton('Загрузить аудио 📂', file_types=['audio'], variant='primary')
+                        show_yt_link_button = gr.Button('Вставьте ссылку YouTube/путь к локальному файлу.')
                         song_input_file.upload(process_file_upload, inputs=[song_input_file], outputs=[local_file, song_input])
 
                     with gr.Column():
-                        pitch = gr.Slider(-3, 3, value=0, step=1, label='Изменение тона (только вокал)', info='Обычно используется 1 для перехода от мужского к женскому вокалу и -1 наоборот. (Октавы)')
-                        pitch_all = gr.Slider(-12, 12, value=0, step=1, label='Общее изменение тона', info='Изменяет высоту тона/ключ вокала и инструментальной музыки. Небольшое изменение может ухудшить качество звука. (Полутонов)')
+                        pitch = gr.Slider(-3, 3, value=0, step=1, label='Pitch Change (Изменить Тональность)', info='Generally, use 1 for male to female conversions and -1 for vice-versa. (Octaves)')
+                        pitch_all = gr.Slider(-12, 12, value=0, step=1, label='Общее изменение высоты тона', info='Изменяет тональность или высоту звучания вокала и инструментов одновременно. Небольшие изменения могут снизить качество звучания. (Полутонов)')
                     show_file_upload_button.click(swap_visibility, outputs=[file_upload_col, yt_link_col, song_input, local_file])
                     show_yt_link_button.click(swap_visibility, outputs=[yt_link_col, file_upload_col, song_input, local_file])
 
-            with gr.Accordion('Параметры голосовой конверсии', open=False):
+            with gr.Accordion('Опции голосовой конверсии:', open=False):
                 with gr.Row():
-                    index_rate = gr.Slider(0, 1, value=0.5, label='Скорость индекса', info="Контролирует, сколько акцента оставить в голосе искусственного интеллекта")
-                    filter_radius = gr.Slider(0, 7, value=3, step=1, label='Радиус фильтра', info='Если >=3: применять медианный фильтр к полученным результатам высоты тона. Может уменьшить шумность')
-                    rms_mix_rate = gr.Slider(0, 1, value=0.25, label='Скорость смешивания RMS', info="Управляет, насколько имитировать громкость исходного вокала (0) или фиксированную громкость (1)")
-                    protect = gr.Slider(0, 0.5, value=0.33, label='Скорость защиты', info='Защищает беззвучные согласные и звуки дыхания. Установите 0,5, чтобы отключить.')
+                    index_rate = gr.Slider(0, 1, value=0.5, label='Index Rate', info="Управляет тем, насколько сохраняется акцент голоса искусственного интеллекта в вокале.")
+                    filter_radius = gr.Slider(0, 7, value=3, step=1, label='Filter radius', info='Если значение больше или равно 3: примените медианный фильтр к полученным результатам высоты звучания. Это может снизить звуковую "дышимость".')
+                    rms_mix_rate = gr.Slider(0, 1, value=0.25, label='RMS mix rate', info="Управляет тем, насколько воспроизводить исходную громкость оригинального вокала (0) или использовать фиксированную громкость (1).")
+                    protect = gr.Slider(0, 0.5, value=0.33, label='Protect rate', info='Защищает бесгласные согласные и звуки дыхания. Установите значение 0.5, чтобы отключить эту функцию.')
                     with gr.Column():
-                        f0_method = gr.Dropdown(['rmvpe', 'mangio-crepe'], value='rmvpe', label='Алгоритм определения тона', info='Лучший выбор - rmvpe (четкость в вокале), затем mangio-crepe (более гладкий вокал)')
-                        crepe_hop_length = gr.Slider(32, 320, value=128, step=1, visible=False, label='Длина шага Crepe', info='Меньшие значения приводят к более длительным конверсиям и большему риску дефицита голоса, но лучшей точности высоты тона.')
+                        f0_method = gr.Dropdown(['rmvpe', 'mangio-crepe'], value='rmvpe', label='Pitch detection algorithm', info='Лучшая опция - это rmvpe (повышение ясности вокала), а затем mangio-crepe (сглаживание вокала) для достижения лучшего звучания вокала.')
+                        crepe_hop_length = gr.Slider(32, 320, value=128, step=1, visible=False, label='Crepe hop length', info='Lower values leads to longer conversions and higher risk of voice cracks, but better pitch accuracy.')
                         f0_method.change(show_hop_slider, inputs=f0_method, outputs=crepe_hop_length)
-                keep_files = gr.Checkbox(label='Сохранить промежуточные файлы', info='Сохранить все аудиофайлы, сгенерированные в директории song_output/id, например, изолированный вокал/инструменты. Оставьте недоступным, чтобы сэкономить место')
+                keep_files = gr.Checkbox(label='Сохранять промежуточные файлы.', info='Сохранить все аудиофайлы, сгенерированные в каталоге song_output/id, например, изолированные вокалы/инструменты. Оставьте недействительным, чтобы сэкономить место.')
 
-            with gr.Accordion('Параметры аудио смешивания', open=False):
+            with gr.Accordion('Опции аудио-смешивания:', open=False):
                 gr.Markdown('### Изменение громкости (дБ)')
                 with gr.Row():
-                    main_gain = gr.Slider(-20, 20, value=0, step=1, label='Основной вокал')
-                    backup_gain = gr.Slider(-20, 20, value=0, step=1, label='Вокал поддержки')
-                    inst_gain = gr.Slider(-20, 20, value=0, step=1, label='Музыка')
+                    main_gain = gr.Slider(-20, 20, value=0, step=1, label='Главный Вокал')
+                    backup_gain = gr.Slider(-20, 20, value=0, step=1, label='Backup Vocals')
+                    inst_gain = gr.Slider(-20, 20, value=0, step=1, label='Music')
 
-                gr.Markdown('### Управление реверберацией на голосе AI')
+                gr.Markdown('### Управление реверберацией в AI Вокале')
                 with gr.Row():
-                    reverb_rm_size = gr.Slider(0, 1, value=0.15, label='Размер комнаты', info='Чем больше комната, тем дольше реверберация')
-                    reverb_wet = gr.Slider(0, 1, value=0.2, label='Уровень Wet', info='Уровень звука голоса AI с реверберацией')
-                    reverb_dry = gr.Slider(0, 1, value=0.8, label='Уровень Dry', info='Уровень звука голоса AI без реверберации')
-                    reverb_damping = gr.Slider(0, 1, value=0.7, label='Уровень затухания', info='Поглощение высоких частот в реверберации')
+                    reverb_rm_size = gr.Slider(0, 1, value=0.15, label='Размер помещения (реверберации)', info='Чем больше размер помещения, тем дольше время реверберации.')
+                    reverb_wet = gr.Slider(0, 1, value=0.2, label='Уровень влажности (реверберации).', info='Уровень искусственного интеллекта в вокалах с реверберацией.')
+                    reverb_dry = gr.Slider(0, 1, value=0.8, label='Уровень сухости (отсутствия реверберации).', info='Уровень AI в вокалах без реверберации')
+                    reverb_damping = gr.Slider(0, 1, value=0.7, label='Уровень подавления (демпфирования) реверберации.', info='Поглащение высоких частот в реверберации')
 
-                gr.Markdown('### Формат аудиовыхода')
-                output_format = gr.Dropdown(['mp3', 'wav'], value='mp3', label='Тип выходного файла', info='mp3: маленький размер файла, неплохое качество. wav: большой размер файла, лучшее качество')
+                gr.Markdown('### Формат Аудиовыхода')
+                output_format = gr.Dropdown(['mp3', 'wav'], value='mp3', label='Тип выходного файла', info='mp3: small file size, decent quality. wav: Large file size, best quality')
 
             with gr.Row():
-                clear_btn = gr.ClearButton(value='Очистить', components=[song_input, rvc_model, keep_files, local_file])
-                generate_btn = gr.Button("Генерировать", variant='primary')
+                clear_btn = gr.ClearButton(value='Clear', components=[song_input, rvc_model, keep_files, local_file])
+                generate_btn = gr.Button("Генерация", variant='primary')
                 ai_cover = gr.Audio(label='AI Cover', show_share_button=False)
 
             ref_btn.click(update_models_list, None, outputs=rvc_model)
@@ -244,118 +242,81 @@ if __name__ == '__main__':
                                      protect, f0_method, crepe_hop_length, pitch_all, reverb_rm_size, reverb_wet,
                                      reverb_dry, reverb_damping, output_format, ai_cover])
 
-        # Вкладка для загрузки модели
-        with gr.Tab('Загрузить модель'):
+        # Download tab
+        with gr.Tab('Скачать Модель'):
 
-            with gr.Tab('По URL HuggingFace/Pixeldrain'):
+            with gr.Tab('From HuggingFace/Pixeldrain URL'):
                 with gr.Row():
-                    model_zip_link = gr.Text(label='Ссылка для скачивания модели', info='Должен быть файл zip, содержащий файл модели .pth и необязательный файл .index.')
-                    model_name = gr.Text(label='Название вашей модели', info='Дайте вашей новой модели уникальное имя от других голосовых моделей.')
+                    model_zip_link = gr.Text(label='Download link to model', info='Should be a zip file containing a .pth model file and an optional .index file.')
+                    model_name = gr.Text(label='Name your model', info='Give your new model a unique name from your other voice models.')
 
                 with gr.Row():
-                    download_btn = gr.Button('Скачать 🌐', variant='primary', scale=19)
-                    dl_output_message = gr.Text(label='Сообщение о выполнении', interactive=False, scale=20)
+                    download_btn = gr.Button('Download 🌐', variant='primary', scale=19)
+                    dl_output_message = gr.Text(label='Output Message', interactive=False, scale=20)
 
                 download_btn.click(download_online_model, inputs=[model_zip_link, model_name], outputs=dl_output_message)
 
-                gr.Markdown('## Примеры ввода')
+                gr.Markdown('## Input Examples')
                 gr.Examples(
                     [
-                        ['https://huggingface.co/phant0m4r/LiSA/resolve/main/LiSA.zip', 'Лиза'],
-                        ['https://pixeldrain.com/u/3tJmABXA', 'Гура'],
-                        ['https://huggingface.co/Kit-Lemonfoot/kitlemonfoot_rvc_models/resolve/main/AZKi%20(Hybrid).zip', 'Ацки']
+                        ['https://huggingface.co/phant0m4r/LiSA/resolve/main/LiSA.zip', 'Lisa'],
+                        ['https://pixeldrain.com/u/3tJmABXA', 'Gura'],
+                        ['https://huggingface.co/Kit-Lemonfoot/kitlemonfoot_rvc_models/resolve/main/AZKi%20(Hybrid).zip', 'Azki']
                     ],
                     [model_zip_link, model_name],
                     [],
                     download_online_model,
                 )
 
-            with gr.Tab('Из общего индекса'):
+            with gr.Tab('From Public Index'):
 
-                gr.Markdown('## Как использовать')
-                gr.Markdown('- Нажмите "Инициализировать таблицу общедоступных моделей"')
-                gr.Markdown('- Фильтруйте модели по тегам или поисковой строке')
-                gr.Markdown('- Выберите строку для автозаполнения ссылки для скачивания и названия модели')
-                gr.Markdown('- Нажмите "Скачать"')
-
-                with gr.Row():
-                    pub_zip_link = gr.Text(label='Ссылка для скачивания модели')
-                    pub_model_name = gr.Text(label='Название модели')
+                gr.Markdown('## How to use')
+                gr.Markdown('- Click Initialize public models table')
+                gr.Markdown('- Filter models using tags or search bar')
+                gr.Markdown('- Select a row to autofill the download link and model name')
+                gr.Markdown('- Click Download')
 
                 with gr.Row():
-                    download_pub_btn = gr.Button('Скачать 🌐', variant='primary', scale=19)
-                    pub_dl_output_message = gr.Text(label='Сообщение о выполнении', interactive=False, scale=20)
+                    pub_zip_link = gr.Text(label='Download link to model')
+                    pub_model_name = gr.Text(label='Model name')
 
-                filter_tags = gr.CheckboxGroup(value=[], label='Показывать голосовые модели с тегами', choices=[])
-                search_query = gr.Text(label='Поиск')
-                load_public_models_button = gr.Button(value='Инициализировать таблицу общедоступных моделей', variant='primary')
+                with gr.Row():
+                    download_pub_btn = gr.Button('Download 🌐', variant='primary', scale=19)
+                    pub_dl_output_message = gr.Text(label='Output Message', interactive=False, scale=20)
 
-                public_models_table = gr.DataFrame(value=[], headers=['Название модели', 'Описание', 'Автор', 'URL', 'Теги'], label='Доступные общедоступные модели', interactive=False)
+                filter_tags = gr.CheckboxGroup(value=[], label='Show voice models with tags', choices=[])
+                search_query = gr.Text(label='Search')
+                load_public_models_button = gr.Button(value='Initialize public models table', variant='primary')
+
+                public_models_table = gr.DataFrame(value=[], headers=['Model Name', 'Description', 'Credit', 'URL', 'Tags'], label='Available Public Models', interactive=False)
                 public_models_table.select(pub_dl_autofill, inputs=[public_models_table], outputs=[pub_zip_link, pub_model_name])
                 load_public_models_button.click(load_public_models, outputs=[public_models_table, filter_tags])
                 search_query.change(filter_models, inputs=[filter_tags, search_query], outputs=public_models_table)
                 filter_tags.change(filter_models, inputs=[filter_tags, search_query], outputs=public_models_table)
                 download_pub_btn.click(download_online_model, inputs=[pub_zip_link, pub_model_name], outputs=pub_dl_output_message)
 
-        # Загрузка вкладки модели
-        with gr.Tab('Загрузить локальную модель'):
-            with gr.Row():
-                local_model_zip = gr.File(label='Zip-архив модели', file_types=['zip'], info='Загрузите архив с моделью')
-                local_model_name = gr.Text(label='Название вашей модели', info='Дайте вашей новой модели уникальное имя от других голосовых моделей.')
+        # Upload tab
+        with gr.Tab('Upload model'):
+            gr.Markdown('## Upload locally trained RVC v2 model and index file')
+            gr.Markdown('- Find model file (weights folder) and optional index file (logs/[name] folder)')
+            gr.Markdown('- Compress files into zip file')
+            gr.Markdown('- Upload zip file and give unique name for voice')
+            gr.Markdown('- Click Upload model')
 
             with gr.Row():
-                upload_btn = gr.Button('Загрузить 📂', variant='primary', scale=19)
-                ul_output_message = gr.Text(label='Сообщение о выполнении', interactive=False, scale=20)
+                with gr.Column():
+                    zip_file = gr.File(label='Zip file')
 
-            upload_btn.click(upload_local_model, inputs=[local_model_zip, local_model_name], outputs=ul_output_message)
-
-        # О вкладках
-      with gr.Tab('О проекте'):
-
-    with gr.Row():
-        gr.Text("Привет! Я создал этот проект, чтобы сделать голосовое AI более доступным и интересным.", scale=10)
-        gr.Text("Моя цель - предоставить вам возможность создавать интересные и креативные покрытия песен с использованием голосовых моделей, которые вам нравятся.", scale=10)
-        gr.Text("Вы можете использовать этот веб-интерфейс для генерации покрытий песен с использованием голосовых моделей и настроек, которые вы выбрали.", scale=10)
-        gr.Text("Вы также можете загружать собственные голосовые модели, чтобы сделать процесс более креативным.", scale=10)
-
-    with gr.Row():
-        gr.Text("Множество голосовых моделей уже доступно для загрузки из общего индекса, и вы также можете загрузить модели с помощью URL-ссылок.", scale=10)
-        gr.Text("Я надеюсь, что вам понравится использовать этот проект, и я с нетерпением жду ваших отзывов и предложений.", scale=10)
-        gr.Text("Если у вас есть вопросы или проблемы, пожалуйста, не стесняйтесь обращаться ко мне.", scale=10)
-
-    with gr.Row():
-        gr.Text("Вы можете найти меня на GitHub по этой ссылке:", scale=10)
-        gr.Text("https://github.com/Varaslav/AICoverGen", scale=10)
-
+                local_model_name = gr.Text(label='Model name')
 
             with gr.Row():
-                gr.Text("Все голосовые модели по умолчанию включаются в сценарии бесплатно и для общественного использования, благодаря усилиям сообщества и исходным кодам проекта.", scale=10)
-                gr.Text("Если вы создаете голосовую модель и хотите добавить ее в общий индекс, отправьте мне сообщение с URL-ссылкой на модель и описанием.", scale=10)
+                model_upload_button = gr.Button('Upload model', variant='primary', scale=19)
+                local_upload_output_message = gr.Text(label='Output Message', interactive=False, scale=20)
+                model_upload_button.click(upload_local_model, inputs=[zip_file, local_model_name], outputs=local_upload_output_message)
 
-        # Вкладка настроек
-        with gr.Tab("Настройки"):
-
-            with gr.Row():
-                gr.Text("Настройки могут быть изменены только после перезапуска сервера.", scale=10)
-
-            with gr.Row():
-                gr.Text("Дополнительные настройки (например, изменение размера сервера) могут быть заданы в файле config.py.", scale=10)
-
-            with gr.Row():
-                gr.Text("Примечание: Некоторые параметры, такие как алгоритм определения тона, могут значительно влиять на скорость и качество обработки.", scale=10)
-
-    # Запустим веб-приложение
-    if args.share_enabled:
-        web_app.share()
-    if args.listen:
-        if args.listen_host is not None:
-            host = args.listen_host
-        else:
-            host = "0.0.0.0"
-        if args.listen_port is not None:
-            port = args.listen_port
-        else:
-            port = 7860
-        web_app.launch(share=False, host=host, port=port)
-    else:
-        web_app.launch(share=False)
+    app.launch(
+        share=args.share_enabled,
+        enable_queue=True,
+        server_name=None if not args.listen else (args.listen_host or '0.0.0.0'),
+        server_port=args.listen_port,
+    )
