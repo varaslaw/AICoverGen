@@ -166,7 +166,7 @@ if __name__ == '__main__':
     with open(os.path.join(rvc_models_dir, 'public_models.json'), encoding='utf8') as infile:
         public_models = json.load(infile)
 
-    with gr.Blocks(title='AICoverGenWebUI') as app:
+    with gr.Blocks(title='AICoverGenWebUI'), theme='light') as app:
 
         gr.Label('AISINGERS 🐳 | https://t.me/aisingers', show_label=False)
 
@@ -180,7 +180,7 @@ if __name__ == '__main__':
                         ref_btn = gr.Button('Обновить модели 🔁', variant='primary')
 
                     with gr.Column() as yt_link_col:
-                        song_input = gr.Text(label='Song input', info='Link to a song on YouTube or full path to a local file. For file upload, click the button below.')
+                        song_input = gr.Text(label='Входная песня.', info='Ссылка на песню на YouTube или полный путь к локальному файлу. Для загрузки файла, нажмите кнопку ниже.')
                         show_file_upload_button = gr.Button('Upload file instead')
 
                     with gr.Column(visible=False) as file_upload_col:
