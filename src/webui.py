@@ -170,7 +170,7 @@ if __name__ == '__main__':
 
     with gr.Blocks(title='AICoverGenWebUI') as app:
 
-        gr.Label('AICoverGen WebUI created with ❤️', show_label=False)
+        gr.Label('VARASLAW AISINGERS ❤️', show_label=False)
 
         # main tab
         with gr.Tab("Generate"):
