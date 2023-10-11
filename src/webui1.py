@@ -4,23 +4,20 @@ import shutil
 import urllib.request
 import zipfile
 from argparse import ArgumentParser
+from pydub import AudioSegment
+import pyaudio
+import wave
 
 import gradio as gr
 
 from main import song_cover_pipeline
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__))
 
 mdxnet_models_dir = os.path.join(BASE_DIR, 'mdxnet_models')
 rvc_models_dir = os.path.join(BASE_DIR, 'rvc_models')
 output_dir = os.path.join(BASE_DIR, 'song_output')
 
-# Функция для записи аудио
-def record_audio(duration=10):
-    fs = 44100  # Частота дискретизации
-    audio = sd.rec(int(fs * duration), samplerate=fs, channels=1)
-    sd.wait()  # Ожидание завершения записи
-    return audio
 
 def get_current_models(models_dir):
     models_list = os.listdir(models_dir)
@@ -123,20 +120,20 @@ def filter_models(tags, query):
             if all(tag in model['tags'] for tag in tags):
                 model_attributes = f"{model['name']} {model['description']} {model['credit']} {' '.join(model['tags'])}".lower()
                 if query.lower() in model_attributes:
-                    models_table.append([model['name'], model['description'], model['credit'], model['url'], model['tags']])
+                    models_table.append([model['name'], model['description'], model['credit'], model['url'], model['tags'])
 
     # filter based on only tags
     elif len(tags) > 0:
         for model in public_models['voice_models']:
             if all(tag in model['tags'] for tag in tags):
-                models_table.append([model['name'], model['description'], model['credit'], model['url'], model['tags']])
+                models_table.append([model['name'], model['description'], model['credit'], model['url'], model['tags'])
 
     # filter based on only query
     else:
         for model in public_models['voice_models']:
             model_attributes = f"{model['name']} {model['description']} {model['credit']} {' '.join(model['tags'])}".lower()
             if query.lower() in model_attributes:
-                models_table.append([model['name'], model['description'], model['credit'], model['url'], model['tags']])
+                models_table.append([model['name'], model['description'], model['credit'], model['url'], model['tags'])
 
     return gr.DataFrame.update(value=models_table)
 
@@ -159,9 +156,33 @@ def show_hop_slider(pitch_detection_algo):
     else:
         return gr.update(visible=False)
 
+# Audio recording (dictaphone) functions
+def record_audio(filename, duration):
+    audio = pyaudio.PyAudio()
+    stream = audio.open(format=pyaudio.paInt16, channels=1, rate=44100, input=True, frames_per_buffer=1024)
+    
+    frames = []
+    print(f"Recording audio to {filename} for {duration} seconds...")
+    
+    for _ in range(0, int(44100 / 1024 * duration)):
+        data = stream.read(1024)
+        frames.append(data)
+    
+    print("Recording finished.")
+    
+    stream.stop_stream()
+    stream.close()
+    audio.terminate()
+    
+    wf = wave.open(filename, "wb")
+    wf.setnchannels(1)
+    wf.setsampwidth(audio.get_sample_size(pyaudio.paInt16))
+    wf.setframerate(44100)
+    wf.writeframes(b"".join(frames))
+    wf.close()
 
 if __name__ == '__main__':
-    parser = ArgumentParser(description='Generate a AI cover song in the song_output/id directory.', add_help=True)
+    parser = ArgumentParser(description='Generate an AI cover song in the song_output/id directory.', add_help=True)
     parser.add_argument("--share", action="store_true", dest="share_enabled", default=False, help="Enable sharing")
     parser.add_argument("--listen", action="store_true", default=False, help="Make the WebUI reachable from your local network.")
     parser.add_argument('--listen-host', type=str, help='The hostname that the server will use.')
@@ -185,18 +206,15 @@ if __name__ == '__main__':
                         rvc_model = gr.Dropdown(voice_models, label='Голосовые модели', info='Папка моделей «AICoverGen --> rvc_models». После добавления новых моделей в эту папку нажмите кнопку «Обновить».')
                         ref_btn = gr.Button('Обновить модели 🔁', variant='primary')
 
-            with gr.Column() as yt_link_col:
-                song_input = gr.Text(label='Входная песня.', info='Ссылка на песню на YouTube или полный путь к локальному файлу. Для загрузки файла, нажмите кнопку ниже.')
-                show_file_upload_button = gr.Button('Upload file instead')
+                    with gr.Column() as yt_link_col:
+                        song_input = gr.Text(label='Входная песня.', info='Ссылка на песню на YouTube или полный путь к локальному файлу. Для загрузки файла, нажмите кнопку ниже.')
+                        show_file_upload_button = gr.Button('Upload file instead')
 
-                record_button = gr.Button('Записать аудио')
-                stop_button = gr.Button('Остановить запись', visible=False)
-
-                with gr.Column(visible=False) as file_upload_col:
-                    local_file = gr.File(label='Audio file')
-                    song_input_file = gr.UploadButton('Загрузить аудио 📂', file_types=['audio'], variant='primary')
-                    show_yt_link_button = gr.Button('Вставьте ссылку YouTube/путь к локальному файлу.')
-                    song_input_file.upload(process_file_upload, inputs=[song_input_file], outputs=[local_file, song_input])
+                    with gr.Column(visible=False) as file_upload_col:
+                        local_file = gr.File(label='Audio file')
+                        song_input_file = gr.UploadButton('Загрузить аудио 📂', file_types=['audio'], variant='primary')
+                        show_yt_link_button = gr.Button('Вставьте ссылку YouTube/путь к локальному файлу.')
+                        song_input_file.upload(process_file_upload, inputs=[song_input_file], outputs=[local_file, song_input])
 
                     with gr.Column():
                         pitch = gr.Slider(-3, 3, value=0, step=1, label='Pitch Change (Изменить Тональность)', info='Generally, use 1 for male to female conversions and -1 for vice-versa. (Octaves)')
@@ -326,6 +344,6 @@ if __name__ == '__main__':
     app.launch(
         share=args.share_enabled,
         enable_queue=True,
-        server_name=None if not args.listen else (args.listen_host or '0.0.0.0'),
-        server_port=args.listen_port,
+        server_name=None if not args.listen else (args.listen_host or "0.0.0.0"),
+        server_port=args.listen_port
     )
