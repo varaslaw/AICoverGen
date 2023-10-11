@@ -4,6 +4,7 @@ import shutil
 import urllib.request
 import zipfile
 from argparse import ArgumentParser
+
 import gradio as gr
 
 from main import song_cover_pipeline
@@ -142,7 +143,7 @@ def show_hop_slider(pitch_detection_algo):
         return gr.update(visible=False)
 
 if __name__ == '__main__':
-    parser = ArgumentParser(description='Generate an AI cover song in the song_output/id directory.', add_help=True)
+    parser = ArgumentParser(description='Generate a AI cover song in the song_output/id directory.', add_help=True)
     parser.add_argument("--share", action="store_true", dest="share_enabled", default=False, help="Enable sharing")
     parser.add_argument("--listen", action="store_true", default=False, help="Make the WebUI reachable from your local network.")
     parser.add_argument('--listen-host', type=str, help='The hostname that the server will use.')
@@ -158,62 +159,62 @@ if __name__ == '__main__':
         gr.Label('AISINGERS 🐳 | https://t.me/aisingers', show_label=False)
 
         # main tab
-        with gr.Tab("Main"):
+        with gr.Tab("Основная"):
 
-            with gr.Accordion('Main Options'):
+            with gr.Accordion('Основные опции'):
                 with gr.Row():
                     with gr.Column():
-                        rvc_model = gr.Dropdown(voice_models, label='Voice Models', info='Models directory: "AICoverGen --> rvc_models". After adding new models to this directory, click "Refresh Models" button.')
-                        ref_btn = gr.Button('Refresh Models 🔁', variant='primary')
+                        rvc_model = gr.Dropdown(voice_models, label='Голосовые модели', info='Папка моделей «AICoverGen --> rvc_models». После добавления новых моделей в эту папку нажмите кнопку «Обновить».')
+                        ref_btn = gr.Button('Обновить модели 🔁', variant='primary')
 
                     with gr.Column() as yt_link_col:
-                        song_input = gr.Text(label='Input Song', info='YouTube link or local file path. To upload a file, click the button below.')
+                        song_input = gr.Text(label='Входная песня.', info='Ссылка на песню на YouTube или полный путь к локальному файлу. Для загрузки файла, нажмите кнопку ниже.')
                         show_file_upload_button = gr.Button('Upload file instead')
 
                     with gr.Column(visible=False) as file_upload_col:
                         local_file = gr.File(label='Audio file')
-                        song_input_file = gr.UploadButton('Upload Audio 📂', file_types=['audio'], variant='primary')
-                        show_yt_link_button = gr.Button('Insert YouTube link/local file path.')
+                        song_input_file = gr.UploadButton('Загрузить аудио 📂', file_types=['audio'], variant='primary')
+                        show_yt_link_button = gr.Button('Вставьте ссылку YouTube/путь к локальному файлу.')
                         song_input_file.upload(process_file_upload, inputs=[song_input_file], outputs=[local_file, song_input])
 
                     with gr.Column():
-                        pitch = gr.Slider(-3, 3, value=0, step=1, label='Pitch Change', info='Use 1 for male-to-female and -1 for vice-versa. (Octaves)')
-                        pitch_all = gr.Slider(-12, 12, value=0, step=1, label='Overall Pitch Change', info='Change pitch for vocals and instruments together. Small changes may reduce audio quality. (Semitones)')
+                        pitch = gr.Slider(-3, 3, value=0, step=1, label='Pitch Change (Изменить Тональность)', info='Generally, use 1 for male to female conversions and -1 for vice-versa. (Octaves)')
+                        pitch_all = gr.Slider(-12, 12, value=0, step=1, label='Общее изменение высоты тона', info='Изменяет тональность или высоту звучания вокала и инструментов одновременно. Небольшие изменения могут снизить качество звучания. (Полутонов)')
                     show_file_upload_button.click(swap_visibility, outputs=[file_upload_col, yt_link_col, song_input, local_file])
                     show_yt_link_button.click(swap_visibility, outputs=[yt_link_col, file_upload_col, song_input, local_file])
 
-            with gr.Accordion('Voice Conversion Options', open=False):
+            with gr.Accordion('Опции голосовой конверсии:', open=False):
                 with gr.Row():
-                    index_rate = gr.Slider(0, 1, value=0.5, label='Index Rate', info="Controls how much the AI voice's accent is preserved in the converted vocals.")
-                    filter_radius = gr.Slider(0, 7, value=3, step=1, label='Filter Radius', info='If value is 3 or greater: apply median filter to the resulting pitch. This can reduce audio artifacts.')
-                    rms_mix_rate = gr.Slider(0, 1, value=0.25, label='RMS Mix Rate', info="Controls how much to retain the original volume of the source audio (0) or use a fixed volume (1).")
-                    protect = gr.Slider(0, 0.5, value=0.33, label='Protect Rate', info='Preserve voiceless consonants and breathing sounds. Set to 0.5 to disable this feature.')
+                    index_rate = gr.Slider(0, 1, value=0.5, label='Index Rate', info="Управляет тем, насколько сохраняется акцент голоса искусственного интеллекта в вокале.")
+                    filter_radius = gr.Slider(0, 7, value=3, step=1, label='Filter radius', info='Если значение больше или равно 3: примените медианный фильтр к полученным результатам высоты звучания. Это может снизить звуковую "дышимость".')
+                    rms_mix_rate = gr.Slider(0, 1, value=0.25, label='RMS mix rate', info="Управляет тем, насколько воспроизводить исходную громкость оригинального вокала (0) или использовать фиксированную громкость (1).")
+                    protect = gr.Slider(0, 0.5, value=0.33, label='Protect rate', info='Защищает бесгласные согласные и звуки дыхания. Установите значение 0.5, чтобы отключить эту функцию.')
                     with gr.Column():
-                        f0_method = gr.Dropdown(['rmvpe', 'mangio-crepe'], value='rmvpe', label='Pitch Detection Algorithm', info='Best practice: rmvpe (for clearer vocals) and then mangio-crepe (for smoother vocals).')
-                        crepe_hop_length = gr.Slider(32, 320, value=128, step=1, visible=False, label='Crepe Hop Length', info='Lower values lead to longer conversions and a higher risk of voice artifacts, but better pitch accuracy.')
+                        f0_method = gr.Dropdown(['rmvpe', 'mangio-crepe'], value='rmvpe', label='Pitch detection algorithm', info='Лучшая опция - это rmvpe (повышение ясности вокала), а затем mangio-crepe (сглаживание вокала) для достижения лучшего звучания вокала.')
+                        crepe_hop_length = gr.Slider(32, 320, value=128, step=1, visible=False, label='Crepe hop length', info='Lower values leads to longer conversions and higher risk of voice cracks, but better pitch accuracy.')
                         f0_method.change(show_hop_slider, inputs=f0_method, outputs=crepe_hop_length)
-                keep_files = gr.Checkbox(label='Save Intermediate Files', info='Save all audio files generated in the song_output/id directory, such as isolated vocals and instruments. Leave unchecked to save space.')
+                keep_files = gr.Checkbox(label='Сохранять промежуточные файлы.', info='Сохранить все аудиофайлы, сгенерированные в каталоге song_output/id, например, изолированные вокалы/инструменты. Оставьте недействительным, чтобы сэкономить место.')
 
-            with gr.Accordion('Audio Mixing Options', open=False):
-                gr.Markdown('### Volume Adjustments (dB)')
+            with gr.Accordion('Опции аудио-смешивания:', open=False):
+                gr.Markdown('### Изменение громкости (дБ)')
                 with gr.Row():
-                    main_gain = gr.Slider(-20, 20, value=0, step=1, label='Main Vocals')
+                    main_gain = gr.Slider(-20, 20, value=0, step=1, label='Главный Вокал')
                     backup_gain = gr.Slider(-20, 20, value=0, step=1, label='Backup Vocals')
                     inst_gain = gr.Slider(-20, 20, value=0, step=1, label='Music')
 
-                gr.Markdown('### Reverb Control in AI Vocals')
+                gr.Markdown('### Управление реверберацией в AI Вокале')
                 with gr.Row():
-                    reverb_rm_size = gr.Slider(0, 1, value=0.15, label='Room Size (Reverb)', info='Larger room size increases reverb time.')
-                    reverb_wet = gr.Slider(0, 1, value=0.2, label='Wetness Level (Reverb)', info='The level of AI in reverb vocals.')
-                    reverb_dry = gr.Slider(0, 1, value=0.8, label='Dryness Level (No Reverb)', info='The level of AI in non-reverb vocals.')
-                    reverb_damping = gr.Slider(0, 1, value=0.7, label='Damping Level (Reverb Damping)', info='Attenuation of high frequencies in reverb.')
+                    reverb_rm_size = gr.Slider(0, 1, value=0.15, label='Размер помещения (реверберации)', info='Чем больше размер помещения, тем дольше время реверберации.')
+                    reverb_wet = gr.Slider(0, 1, value=0.2, label='Уровень влажности (реверберации).', info='Уровень искусственного интеллекта в вокалах с реверберацией.')
+                    reverb_dry = gr.Slider(0, 1, value=0.8, label='Уровень сухости (отсутствия реверберации).', info='Уровень AI в вокалах без реверберации')
+                    reverb_damping = gr.Slider(0, 1, value=0.7, label='Уровень подавления (демпфирования) реверберации.', info='Поглащение высоких частот в реверберации')
 
-                gr.Markdown('### Audio Output Format')
-                output_format = gr.Dropdown(['mp3', 'wav'], value='mp3', label='Output File Type', info='mp3: small file size, decent quality. wav: Large file size, best quality')
+                gr.Markdown('### Формат Аудиовыхода')
+                output_format = gr.Dropdown(['mp3', 'wav'], value='mp3', label='Тип выходного файла', info='mp3: small file size, decent quality. wav: Large file size, best quality')
 
             with gr.Row():
                 clear_btn = gr.ClearButton(value='Clear', components=[song_input, rvc_model, keep_files, local_file])
-                generate_btn = gr.Button("Generate", variant='primary')
+                generate_btn = gr.Button("Генерация", variant='primary')
                 ai_cover = gr.Audio(label='AI Cover', show_share_button=False)
 
             ref_btn.click(update_models_list, None, outputs=rvc_model)
@@ -230,7 +231,7 @@ if __name__ == '__main__':
                                      reverb_dry, reverb_damping, output_format, ai_cover])
 
         # Download tab
-        with gr.Tab('Download Model'):
+        with gr.Tab('Скачать Модель'):
 
             with gr.Tab('From HuggingFace/Pixeldrain URL'):
                 with gr.Row():
@@ -283,12 +284,12 @@ if __name__ == '__main__':
                 download_pub_btn.click(download_online_model, inputs=[pub_zip_link, pub_model_name], outputs=pub_dl_output_message)
 
         # Upload tab
-        with gr.Tab('Upload Model'):
+        with gr.Tab('Upload model'):
             gr.Markdown('## Upload locally trained RVC v2 model and index file')
-            gr.Markdown('- Locate model file (weights folder) and optional index file (logs/[name] folder)')
-            gr.Markdown('- Compress files into a zip file')
-            gr.Markdown('- Upload zip file and provide a unique name for the voice')
-            gr.Markdown('- Click Upload Model')
+            gr.Markdown('- Find model file (weights folder) and optional index file (logs/[name] folder)')
+            gr.Markdown('- Compress files into zip file')
+            gr.Markdown('- Upload zip file and give unique name for voice')
+            gr.Markdown('- Click Upload model')
 
             with gr.Row():
                 with gr.Column():
@@ -297,7 +298,7 @@ if __name__ == '__main__':
                 local_model_name = gr.Text(label='Model name')
 
             with gr.Row():
-                model_upload_button = gr.Button('Upload Model', variant='primary', scale=19)
+                model_upload_button = gr.Button('Upload model', variant='primary', scale=19)
                 local_upload_output_message = gr.Text(label='Output Message', interactive=False, scale=20)
                 model_upload_button.click(upload_local_model, inputs=[zip_file, local_model_name], outputs=local_upload_output_message)
 
