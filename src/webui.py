@@ -166,7 +166,7 @@ if __name__ == '__main__':
     with open(os.path.join(rvc_models_dir, 'public_models.json'), encoding='utf8') as infile:
         public_models = json.load(infile)
 
-    with gr.Blocks(title='AICoverGenWebUI') as app:
+    with gr.Blocks(title='AISINGERS 🐳') as app:
 
         gr.Label('AISINGERS 🐳 | https://t.me/aisingers', show_label=False)
 
@@ -247,48 +247,48 @@ if __name__ == '__main__':
 
             with gr.Tab('From HuggingFace/Pixeldrain URL'):
                 with gr.Row():
-                    model_zip_link = gr.Text(label='Download link to model', info='Should be a zip file containing a .pth model file and an optional .index file.')
-                    model_name = gr.Text(label='Name your model', info='Give your new model a unique name from your other voice models.')
+                    model_zip_link = gr.Text(label='Скачать - Ссылка на модель!', info='Должен быть zip-файл, содержащий файл модели .pth и необязательный файл .index.')
+                    model_name = gr.Text(label='Имя вашей модели', info='Дайте вашей новой модели голоса уникальное название, чтобы оно отличалось от названий других ваших голосовых моделей.')
 
                 with gr.Row():
-                    download_btn = gr.Button('Download 🌐', variant='primary', scale=19)
-                    dl_output_message = gr.Text(label='Output Message', interactive=False, scale=20)
+                    download_btn = gr.Button('СКАЧАТЬ :3 🌐', variant='primary', scale=19)
+                    dl_output_message = gr.Text(label='Сообщение вывода', interactive=False, scale=20)
 
                 download_btn.click(download_online_model, inputs=[model_zip_link, model_name], outputs=dl_output_message)
 
-                gr.Markdown('## Input Examples')
+                gr.Markdown('## Список моделей!')
                 gr.Examples(
                     [
-                        ['https://huggingface.co/phant0m4r/LiSA/resolve/main/LiSA.zip', 'Lisa'],
-                        ['https://pixeldrain.com/u/3tJmABXA', 'Gura'],
-                        ['https://huggingface.co/Kit-Lemonfoot/kitlemonfoot_rvc_models/resolve/main/AZKi%20(Hybrid).zip', 'Azki']
+                        ['https://t.me/simbioz_2002', '💎 ЗАКАЗАТЬ МОДЕЛЬ НА ЗАКАЗ НА НОВОЙ ТЕХНОЛОГИИ RVC V2.5 VC+ В ЛС 💎'],
+                        ['https://huggingface.co/whichbomboclatdogiam/despimeow/resolve/main/despimeow.zip', 'Женский голос v4 (despimeow, ru streamer)'],
+                        ['https://huggingface.co/Bamre/Jack_the_ripper/resolve/main/Jack.zip', 'Женский Голос v5 (eng dub)']
                     ],
                     [model_zip_link, model_name],
                     [],
                     download_online_model,
                 )
 
-            with gr.Tab('From Public Index'):
+            with gr.Tab('Из общедоступного индекса'):
 
-                gr.Markdown('## How to use')
-                gr.Markdown('- Click Initialize public models table')
-                gr.Markdown('- Filter models using tags or search bar')
-                gr.Markdown('- Select a row to autofill the download link and model name')
-                gr.Markdown('- Click Download')
-
-                with gr.Row():
-                    pub_zip_link = gr.Text(label='Download link to model')
-                    pub_model_name = gr.Text(label='Model name')
+                gr.Markdown('## Как использовать')
+                gr.Markdown('- Нажмите Инициализировать таблицу общедоступных моделей')
+                gr.Markdown('- Фильтруйте модели с помощью тегов или строки поиска')
+                gr.Markdown('- Выберите строку, чтобы автоматически заполнить ссылку для скачивания и имя модели')
+                gr.Markdown('- Нажмите Скачать')
 
                 with gr.Row():
-                    download_pub_btn = gr.Button('Download 🌐', variant='primary', scale=19)
-                    pub_dl_output_message = gr.Text(label='Output Message', interactive=False, scale=20)
+                    pub_zip_link = gr.Text(label='Ссылка для скачивания модели')
+                    pub_model_name = gr.Text(label='Имя модели')
 
-                filter_tags = gr.CheckboxGroup(value=[], label='Show voice models with tags', choices=[])
+                with gr.Row():
+                    download_pub_btn = gr.Button('Скачать 🌐', variant='primary', scale=19)
+                    pub_dl_output_message = gr.Text(label='Сообщение вывода', interactive=False, scale=20)
+
+                filter_tags = gr.CheckboxGroup(value=[], label='Показать голосовые модели с тегами', choices=[])
                 search_query = gr.Text(label='Search')
-                load_public_models_button = gr.Button(value='Initialize public models table', variant='primary')
+                load_public_models_button = gr.Button(value='Инициализировать таблицу общедоступных моделей', variant='primary')
 
-                public_models_table = gr.DataFrame(value=[], headers=['Model Name', 'Description', 'Credit', 'URL', 'Tags'], label='Available Public Models', interactive=False)
+                public_models_table = gr.DataFrame(value=[], headers=['Имя модели', 'Description', 'Credit', 'URL', 'Tags'], label='Доступные Общедоступные Модели', interactive=False)
                 public_models_table.select(pub_dl_autofill, inputs=[public_models_table], outputs=[pub_zip_link, pub_model_name])
                 load_public_models_button.click(load_public_models, outputs=[public_models_table, filter_tags])
                 search_query.change(filter_models, inputs=[filter_tags, search_query], outputs=public_models_table)
@@ -296,22 +296,22 @@ if __name__ == '__main__':
                 download_pub_btn.click(download_online_model, inputs=[pub_zip_link, pub_model_name], outputs=pub_dl_output_message)
 
         # Upload tab
-        with gr.Tab('Upload model'):
-            gr.Markdown('## Upload locally trained RVC v2 model and index file')
-            gr.Markdown('- Find model file (weights folder) and optional index file (logs/[name] folder)')
-            gr.Markdown('- Compress files into zip file')
-            gr.Markdown('- Upload zip file and give unique name for voice')
-            gr.Markdown('- Click Upload model')
+        with gr.Tab('Загрузка модели'):
+            gr.Markdown('## Загрузите локально обученную модель RVC v2 и файл индекса - по желанию')
+            gr.Markdown('- Найдите файл модели (папка weights) и опционально файл индекса (папка logs/[имя])')
+            gr.Markdown('- Сожмите файлы в zip-архив')
+            gr.Markdown('- Загрузите zip-файл и укажите уникальное имя для голоса')
+            gr.Markdown('- Нажмите "Загрузить модель')
 
             with gr.Row():
                 with gr.Column():
                     zip_file = gr.File(label='Zip file')
 
-                local_model_name = gr.Text(label='Model name')
+                local_model_name = gr.Text(label='Имя модели (ты гей)')
 
             with gr.Row():
-                model_upload_button = gr.Button('Upload model', variant='primary', scale=19)
-                local_upload_output_message = gr.Text(label='Output Message', interactive=False, scale=20)
+                model_upload_button = gr.Button('Загрузка модели', variant='primary', scale=19)
+                local_upload_output_message = gr.Text(label='Оповещение', interactive=False, scale=20)
                 model_upload_button.click(upload_local_model, inputs=[zip_file, local_model_name], outputs=local_upload_output_message)
 
     app.launch(
